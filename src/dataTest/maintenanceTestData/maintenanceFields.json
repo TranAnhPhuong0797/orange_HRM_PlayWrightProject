@@ -1,0 +1,5 @@
+{
+  "url": "https://example.com/login",
+  "validUser": { "username": "test", "password": "123456" },
+  "invalidUser": { "username": "foo", "password": "wrong" }
+}

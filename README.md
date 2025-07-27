@@ -145,6 +145,10 @@ BrowserFactory.createProject(browser).
     TEST_ENV=staging npm test      # Linux/macOS
     $env:TEST_ENV="prod"; npm test # Windows PowerShell
 ```
+* Install Env file
+```
+    npm install dotenv
+```
 
 **Reporting**
 * HTML Report

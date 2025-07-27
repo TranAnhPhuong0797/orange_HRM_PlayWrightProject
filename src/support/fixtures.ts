@@ -1,25 +1,32 @@
-import { test as base, expect } from '@playwright/test';
-import { userFactory, UserRole, UserCreds } from '../factories/UserFactory';
-import { envFactory, EnvConfig, EnvName} from '../factories/EnvFactory';
+import { test as base } from '@playwright/test';
+import { EnvFactory, EnvName } from '../factories/EnvFactory';
+import { ApiFactory } from '../factories/ApiFactory';
 
-type MyFixtures = {
-  user: UserCreds;
-  envConfig: EnvConfig;
-};
+// Import all Page Objects and corresponding locator maps
+import { LoginActions }       from '../pages/loginPage/action';
+import { loginLocators }      from '../pages/loginPage/locator';
 
-export const test = base.extend<MyFixtures>({
-  // fixture user, pick role từ env var hoặc default 'regular'
-  user: async ({}, use) => {
-    const role = (process.env.USER_ROLE as UserRole) || 'admin';
-    const creds = userFactory.getUser(role);
-    await use(creds);
-  },
-  // fixture envConfig, pick env từ env var hoặc default 'dev'
-  envConfig: async ({}, use) => {
+/**
+ * Extend Playwright's base test with environment-specific fixtures:
+ * - `baseURL`: the base URL for browser navigation
+ * - `apiURL`: optional API URL, only injected if the test is annotated with type 'api'
+ */
+export const test = base.extend<{
+  baseURL: string;
+  apiURL?: string;
+}>({
+  baseURL: async ({}, use) => {
+    // Get the environment from the TEST_ENV variable or default to 'dev'
     const env = (process.env.TEST_ENV as EnvName) || 'dev';
-    const cfg = envFactory.getConfig(env);
-    await use(cfg);
+    await use(EnvFactory.getBaseURL(env));
   },
+  // Only inject apiURL if the test is marked with the 'api' annotation
+  apiURL: async ({}, use, testInfo) => {
+    if (testInfo.annotations.find(a => a.type === 'api')) {
+      const env = (process.env.TEST_ENV as EnvName) || 'dev';
+      await use(ApiFactory.getApiURL(env));
+    } else {
+      await use(undefined); // Otherwise, provide undefined to skip it
+    }
+  }
 });
-
-export { expect };

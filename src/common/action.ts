@@ -1,53 +1,35 @@
-// src/common/action.ts
 import { Page, Locator } from '@playwright/test';
-import { commonLocators, LocatorDef } from '../common/locator';
+import { LocatorFn } from './baseComponent';
 
-export class CommonAction {
+/**
+ * Common interaction behaviors with a Playwright page,
+ * using function-based locators.
+ */
+export class CommonAction<T extends Record<string, LocatorFn>> {
   constructor(
-    private page: Page,
-    /** Cho phép truyền vào map locator riêng của từng page */
-    private definitions: Record<string, LocatorDef>
+    private readonly page: Page,
+    private readonly locators: T
   ) {}
 
-  private getDefinition(key: string): LocatorDef {
-    const def = this.definitions[key];
-    if (!def) throw new Error(`No locator defined for key "${key}"`);
-    return def;
+  /** Return the Locator by calling the locator function */
+  public getLocator(key: keyof T): Locator {
+    return this.locators[key](this.page);
   }
 
-  /**
-   * Return a Playwright Locator based on  key defind in`locators`.
-   * @param name The name of key in `locators`
-   */
-  public getLocator(name: string): Locator {
-    const def: LocatorDef | undefined = commonLocators[name];
-    if (!def) {
-      throw new Error(`No locator found in locator.ts for key "${name}"`);
-    }
-    switch (def.type) {
-      case 'id':
-        // find follow id => #id
-        return this.page.locator(`#${def.selector}`);
-      case 'name':
-        // find follow attribute name
-        return this.page.locator(`[name="${def.selector}"]`);
-      case 'css':
-        // selector CSS
-        return this.page.locator(def.selector);
-      case 'xpath':
-        // xpath=
-        return this.page.locator(`xpath=${def.selector}`);
-      default:
-        // vanilla fallback
-        return this.page.locator(def.selector);
-    }
+  /** Click the element associated with the key */
+  public click(key: keyof T) {
+    return this.getLocator(key).click();
   }
 
-  public async click(name: string) {
-    await this.getLocator(name).click();
+  /** Fill an input element with the provided value */
+  public fill(key: keyof T, value: string) {
+    return this.getLocator(key).fill(value);
   }
 
-  public async fill(name: string, text: string) {
-    await this.getLocator(name).fill(text);
+  /** Get the innerText of an element after ensuring it's visible */
+  public async getInnerText(key: keyof T): Promise<string> {
+    const loc = this.getLocator(key);
+    await loc.waitFor({ state: 'visible' });
+    return loc.innerText();
   }
 }

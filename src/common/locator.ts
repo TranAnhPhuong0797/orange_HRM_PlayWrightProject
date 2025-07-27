@@ -1,36 +1,37 @@
-// src/common/locator.ts
-export type LocatorType = 'id' | 'name' | 'css' | 'xpath';
-
-export interface LocatorDef {
-  type: LocatorType;
-  selector: string;
-}
+// src/common/locators.ts
+import { Page, Locator } from '@playwright/test';
 
 /**
- * Danh sách locator cho toàn bộ project.
- * Key là tên bạn dùng để gọi trong CommonAction.getLocator(key).
+ * Function-based locators for common elements.
  */
-export const commonLocators: Record<string, LocatorDef> = {
-  // =========== ID Locator ===========
-  // Ví dụ: <button id="login-btn">Login</button>
-  loginButton:    { type: 'id',    selector: 'login-btn' },
+export const commonLocators = {
+  // ID locator → CSS #id
+  loginButton: (page: Page): Locator =>
+    page.locator('#login-btn'),
 
-  // ========== Name Locator ==========
-  // Ví dụ: <input name="username" />
-  usernameField:  { type: 'name',  selector: 'username' },
-  passwordField:  { type: 'name',  selector: 'password' },
+  // Name locator → [name="…"]
+  usernameField: (page: Page): Locator =>
+    page.locator('[name="username"]'),
+  passwordField: (page: Page): Locator =>
+    page.locator('[name="password"]'),
 
-  // ========== CSS Locator ===========
-  // Ví dụ: <div class="notification success">…</div>
-  successBanner:  { type: 'css',   selector: '.notification.success' },
-  menuItems:      { type: 'css',   selector: 'ul.nav > li' },
+  // Default CSS locator
+  headerTitle: (page: Page): Locator =>
+    page.locator('header *[class*="header-title"]'),
 
-  // ========= XPATH Locator ==========
-  // Ví dụ: <h1>Welcome, User!</h1>
-  welcomeHeader:  { type: 'xpath', selector: '//h1[contains(text(),"Welcome")]' },
-  logoutLink:     { type: 'xpath', selector: '//a[@href="/logout"]' },
+  // XPath locator (no need to prefix with “xpath=”)
+  welcomeHeader: (page: Page): Locator =>
+    page.locator('//h1[contains(text(),"Welcome")]'),
+  logoutLink: (page: Page): Locator =>
+    page.locator('//a[@href="/logout"]'),
 
-  // ========= Thêm ví dụ khác ==========
-  signUpLink:     { type: 'css',   selector: 'a.signup' },
-  footerText:     { type: 'xpath', selector: '//footer//p[@class="copyright"]' },
-};
+  // Text-based locator
+  helpLink: (page: Page): Locator =>
+    page.locator('text=Help & Support'),
+} as const;
+
+/** Union type of all keys in commonLocators */
+export type CommonLocatorKey = keyof typeof commonLocators;
+
+/** Object type for passing into BaseComponent or action/assertion layers */
+export type CommonLocators = typeof commonLocators;

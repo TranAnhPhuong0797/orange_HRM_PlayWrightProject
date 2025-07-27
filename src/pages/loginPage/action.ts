@@ -1,36 +1,34 @@
 import { Page } from '@playwright/test';
-import { CommonAction } from '../../common/action';
-import { loginLocators, LoginLocatorKey } from '../loginPage/locator';
-import { userFactory, UserRole } from '../../factories/UserFactory';
+import { BaseComponent, LocatorFn } from '../../common/baseComponent';
+import { loginLocators, type LoginLocators } from './locator';
+import { UserFactory, type UserRole } from '../../factories/UserFactory';
 
-export class LoginActions {
-  private action: CommonAction;
-
-  constructor(private page: Page) {
-    this.action = new CommonAction(page, loginLocators as any);
+/**
+ * Encapsulates all login-related actions and assertions.
+ * Inherits common behaviors from BaseComponent.
+ */
+export class LoginActions extends BaseComponent<LoginLocators> {
+  constructor(page: Page) {
+    super(page, loginLocators);
   }
 
   /**
-   * @param role role of user want to login, example 'admin', 'regular'
-   * Default is 'admin'
-   * Login to the application with provided username and password.
+   * Log in to the application using the provided user role.
+   * Defaults to 'admin' if no role is specified.
    */
   async login(role: UserRole = 'admin') {
-    const { username, password } = userFactory.getUser(role);
-
-    await this.page.goto('/');
-
-    await this.action.fill('usernameInput' as LoginLocatorKey, username);
-    await this.action.fill('passwordInput' as LoginLocatorKey, password);
-    await this.action.click('loginButton'   as LoginLocatorKey);
+    const { username, password } = UserFactory.getUser(role);
+    await this.page.goto('/login');
+    await this.action.fill('usernameInput', username);
+    await this.action.fill('passwordInput', password);
+    await this.action.click('loginButton');
   }
 
-  async expectError(message: string) {
-    const errorLocatorKey = 'loginError'; 
-    await this.action.getLocator(errorLocatorKey).waitFor();
-    const text = await this.action.getLocator(errorLocatorKey).textContent();
-    if (text !== message) {
-      throw new Error(`Expected error "${message}", got "${text}"`);
-    }
+  /**
+   * Assert that the expected error message is displayed.
+   */
+  async expectError(message: string): Promise<void> {
+    // Directly call the assertion helper
+    await this.assertion.assertTextEquals('loginError', message);
   }
 }

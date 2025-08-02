@@ -11,7 +11,7 @@ export class LoginActions extends BaseComponent<LoginLocators> {
 
   async login(role: UserRole = 'admin') {
     const { username, password } = UserFactory.getUser(role);
-    await this.page.goto('/login');
+    await this.page.goto('login');
     await this.action.fill('usernameInput', username);
     await this.action.fill('passwordInput', password);
     await this.action.click('loginButton');

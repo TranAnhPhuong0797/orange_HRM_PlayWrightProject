@@ -1,7 +1,8 @@
-// src/common/assertion.ts
 import { expect, Page } from '@playwright/test';
 import { CommonAction } from './action';
 import { LocatorFn } from './baseComponent';
+
+const longTimeout = 5000;
 
 /**
  * Common assertion utility for validating UI elements
@@ -16,6 +17,48 @@ export class CommonAssertion<T extends Record<string, LocatorFn>> {
   ) {
     // Initialize the action helper with page and locator functions
     this.action = new CommonAction<T>(page, locators);
+  }
+
+  /**
+   * Assert that an element is enabled.
+   */
+  public async verifyElementEnabled(key: keyof T) {
+    const locator = this.locators[key](this.page);
+    await expect(locator).toBeEnabled({ timeout: longTimeout });
+  }
+
+  /**
+   * Assert that an element is disabled.
+   */
+  public async verifyElementDisabled(key: keyof T) {
+    const locator = this.locators[key](this.page);
+    await expect(locator).toBeDisabled({ timeout: longTimeout });
+  }
+
+  /**
+   * Assert that an element is visible.
+   */
+  public async verifyElementVisible(key: keyof T) {
+    const locator = this.locators[key](this.page);
+    await expect(locator).toBeVisible({ timeout: longTimeout });
+  }
+
+  /**
+   * Assert that an element is hidden.
+   */
+  public async verifyElementHidden(key: keyof T) {
+    const locator = this.locators[key](this.page);
+    await expect(locator).toBeHidden({ timeout: longTimeout });
+  }
+
+  /**
+   * Assert that an element does not exist in DOM.
+   */
+  public async verifyElementNotPresent(key: keyof T) {
+    const locator = this.locators[key](this.page);
+    await expect(locator).toHaveCount(0, {
+      timeout: longTimeout,
+    });
   }
 
   /**

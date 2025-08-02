@@ -24,6 +24,9 @@ const projects: PlaywrightTestProject[] = (['chromium', 'firefox', 'webkit'] as 
   }));
 
 export default defineConfig({
+  globalSetup: require.resolve('./src/support/global-setup'),
+  globalTeardown: require.resolve('./src/support/global-teardown'),
+
   testDir: './e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -42,13 +45,15 @@ export default defineConfig({
     headless: true,
     video: 'retain-on-failure', // Record video only when the test fails
     baseURL,
+    navigationTimeout: 60_000,
+    actionTimeout: 60_000,
   },
 
   /* Configure projects for major browsers */
   projects: [
     BrowserFactory.createProject('chromium'),
     BrowserFactory.createProject('firefox'),
-    BrowserFactory.createProject('webkit'),
+    BrowserFactory.createProject('edge'),
 
     /* Test against mobile viewports. */
     // {

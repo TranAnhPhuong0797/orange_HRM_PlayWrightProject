@@ -1,17 +1,32 @@
-import { defineConfig, devices } from '@playwright/test';
-import { BrowserFactory } from './src/factories/BrowserFactory';
-import envFactory, { EnvName } from './src/factories/EnvFactory';
+import { defineConfig, devices, PlaywrightTestProject  } from '@playwright/test';
+import dotenv from 'dotenv';
+import { BrowserFactory, BrowserName } from './src/factories/BrowserFactory';
+import { EnvFactory, EnvName } from './src/factories/EnvFactory';
 
+// 1) Load .env
+dotenv.config();
 
-// Import { envFactory, EnvName } from './src/factories/envFactory';
+// 2) Get ENV from the TEST_ENV variable (default to 'dev' if not set)
 const ENV = (process.env.TEST_ENV as EnvName) || 'dev';
-const { baseURL } = envFactory.getConfig(ENV)
+const baseURL = EnvFactory.getBaseURL(ENV);
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
+// 3) Generate an array of projects using BrowserFactory
+const projects: PlaywrightTestProject[] = (['chromium', 'firefox', 'webkit'] as BrowserName[])
+  .map(browserName => BrowserFactory.createProject(browserName as any))
+  .map(project => ({
+    ...project,
+    use: {
+      ...project.use,
+      baseURL,               // Inject baseURL from the selected environment
+      // You can add other shared `use` options here, such as viewport, headless, etc.
+      // apiURL can also be exposed via fixtures if needed
+    }
+  }));
 
 export default defineConfig({
+  globalSetup: require.resolve('./src/support/global-setup'),
+  globalTeardown: require.resolve('./src/support/global-teardown'),
+
   testDir: './e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -26,18 +41,19 @@ export default defineConfig({
   timeout: 30_000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    // Default configuration for all tests (can be overridden per test)
+    headless: true,
+    video: 'retain-on-failure', // Record video only when the test fails
+    baseURL,
+    navigationTimeout: 60_000,
+    actionTimeout: 60_000,
   },
 
   /* Configure projects for major browsers */
   projects: [
     BrowserFactory.createProject('chromium'),
     BrowserFactory.createProject('firefox'),
-    BrowserFactory.createProject('webkit'),
+    BrowserFactory.createProject('edge'),
 
     /* Test against mobile viewports. */
     // {

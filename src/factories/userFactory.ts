@@ -1,15 +1,45 @@
-import usersData from '../dataTest/users.json';
+// Define user roles as a union type
+export type UserRole = 'admin' | 'regular' | 'guest';
 
-export type UserRole = keyof typeof usersData;
+/**
+ * Interface representing user credentials.
+ */
 export interface UserCreds {
   username: string;
   password: string;
 }
 
-export class userFactory {
+/**
+ * Factory class to retrieve user credentials
+ * based on the specified role (admin, regular, guest).
+ */
+export class UserFactory {
   static getUser(role: UserRole): UserCreds {
-    const creds = usersData[role];
-    if (!creds) throw new Error(`No user data for role "${role}"`);
-    return creds;
+    let username: string | undefined;
+    let password: string | undefined;
+
+    // Assign credentials based on the user role
+    switch (role) {
+      case 'admin':
+        username = process.env.ADMIN_USER;
+        password = process.env.ADMIN_PASS;
+        break;
+      case 'regular':
+        username = process.env.REGULAR_USER;
+        password = process.env.REGULAR_PASS;
+        break;
+      case 'guest':
+        username = process.env.GUEST_USER;
+        password = process.env.GUEST_PASS;
+        break;
+    }
+
+    // Throw an error if either username or password is missing
+    if (!username || password === undefined) {
+      throw new Error(`Missing credentials for role "${role}" in environment variables`);
+    }
+
+    // Return the credentials
+    return { username, password };
   }
 }

@@ -1,53 +1,51 @@
-// src/common/action.ts
 import { Page, Locator } from '@playwright/test';
-import { commonLocators, LocatorDef } from '../common/locator';
+import { LocatorFn } from './baseComponent';
 
-export class CommonAction {
+/**
+ * Common interaction behaviors with a Playwright page,
+ * using function-based locators.
+ */
+export class CommonAction<T extends Record<string, LocatorFn>> {
   constructor(
-    private page: Page,
-    /** Cho phép truyền vào map locator riêng của từng page */
-    private definitions: Record<string, LocatorDef>
+    private readonly page: Page,
+    private readonly locators: T,
+    /** default timeout for waiting for elements */
+    private readonly defaultTimeout = 15_000
   ) {}
 
-  private getDefinition(key: string): LocatorDef {
-    const def = this.definitions[key];
-    if (!def) throw new Error(`No locator defined for key "${key}"`);
-    return def;
+  /** Return the Locator by calling the locator function */
+  public getLocator(key: keyof T): Locator {
+    return this.locators[key](this.page);
   }
 
-  /**
-   * Return a Playwright Locator based on  key defind in`locators`.
-   * @param name The name of key in `locators`
-   */
-  public getLocator(name: string): Locator {
-    const def: LocatorDef | undefined = commonLocators[name];
-    if (!def) {
-      throw new Error(`No locator found in locator.ts for key "${name}"`);
-    }
-    switch (def.type) {
-      case 'id':
-        // find follow id => #id
-        return this.page.locator(`#${def.selector}`);
-      case 'name':
-        // find follow attribute name
-        return this.page.locator(`[name="${def.selector}"]`);
-      case 'css':
-        // selector CSS
-        return this.page.locator(def.selector);
-      case 'xpath':
-        // xpath=
-        return this.page.locator(`xpath=${def.selector}`);
-      default:
-        // vanilla fallback
-        return this.page.locator(def.selector);
-    }
+  /** Wait for the element to become visible before interacting */
+  private async waitVisible(key: keyof T, timeout?: number) {
+    await this.getLocator(key).waitFor({
+      state: 'visible',
+      timeout: timeout ?? this.defaultTimeout
+    });
   }
 
-  public async click(name: string) {
-    await this.getLocator(name).click();
+  /** Click element after waiting for it to be visible */
+  public async click(
+    key: keyof T,
+  ): Promise<void> {
+    await this.waitVisible(key);
+    await this.getLocator(key).click();
   }
 
-  public async fill(name: string, text: string) {
-    await this.getLocator(name).fill(text);
+  /** Fill input field after waiting for it to be visible */
+  public async fill(
+    key: keyof T,
+    value: string,
+  ): Promise<void> {
+    await this.waitVisible(key);
+    await this.getLocator(key).fill(value);
+  }
+
+  /** Get element's innerText after ensuring it is visible */
+  public async getInnerText(key: keyof T): Promise<string> {
+    await this.waitVisible(key);
+    return this.getLocator(key).innerText();
   }
 }

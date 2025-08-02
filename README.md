@@ -140,6 +140,16 @@ BrowserFactory.createProject(browser).
     npx playwright test --project=chromium
 ```
 
+* Run test with open UI
+```
+    npx playwright test --ui
+```
+
+* Run test with Debug mode
+```
+    npx playwright test --debug
+```
+
 * Run against a different environment
 ```
     TEST_ENV=staging npm test      # Linux/macOS

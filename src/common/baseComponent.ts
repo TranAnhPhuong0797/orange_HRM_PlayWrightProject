@@ -24,5 +24,6 @@ export abstract class BaseComponent<
     // Explicitly enforce generic <T> so TypeScript properly infers the type
     this.action    = new CommonAction<T>(page, locators);
     this.assertion = new CommonAssertion<T>(page, locators);
+
   }
 }

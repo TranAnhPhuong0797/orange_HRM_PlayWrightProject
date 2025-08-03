@@ -80,29 +80,39 @@ npm -v     # e.g., 8.x.x or above
 **Project Structure**
 ```text
 project-root/
-├── e2e/                     # Test specs (TypeScript)
-│   └── example.spec.ts
-├── src/                     # Shared actions & locators
+├── e2e/                # Test specs (TypeScript)
+│   └── *.spec.ts
+├── src/
 │   ├── common/
-│   │   ├── locator.ts       # LocatorType, LocatorDef, LocatorRepository
-│   │   └── action.ts        # CommonAction wrapping Playwright locators
-│   ├── pages/               # Page Object classes
-│   │   └── login/
-│   │       ├── locator.ts   # loginLocators map + types
-│   │       └── login.actions.ts # LoginActions using CommonAction
-│   ├── factories/           # Factory Pattern implementations
-│   │   ├── UserFactory.ts   # getUser(role)
-│   │   ├── EnvFactory.ts    # getConfig(env)
-│   │   └── BrowserFactory.ts# createProject(browser)
-│   ├── dataTest/            # External test data (JSON/TS)
-│   │   ├── users.json
-│   │   └── environments.json
-│   └── support/             # Playwright fixtures & helpers
-│       ├── fixtures.ts      # test, expect extension
-│       ├── helpers.ts       # readJson, randomString, etc.
-│       └── global-setup.ts  # setup before suite
-├── playwright.config.ts     # Playwright Test configuration
-├── tsconfig.json            # TypeScript configuration
+│   │   ├── baseComponent.ts   # Base class for CommonAction & CommonAssertion
+│   │   ├── locator.ts         # Function-based locators map
+│   │   ├── action.ts          # CommonAction with auto-wait
+│   │   └── assertion.ts       # CommonAssertion
+│   ├── pages/                 # Page Object classes
+│   │   ├── loginPage/
+│   │   │   ├── locator.ts     # loginLocators map + types
+│   │   │   └── action.ts      # LoginActions using BaseComponent
+│   │   └── facadeStructure
+|   |       └── facadeClass.ts # Facade for all Page Objects
+│   ├── factories/            # Factory implementations
+│   │   ├── UserFactory.ts
+│   │   ├── EnvFactory.ts
+│   │   └── BrowserFactory.ts
+│   ├── dataTest/             # External test data
+│   │   ├── users.json        # (deprecated for env/creds)
+│   │   └── environments.json # (deprecated for .env)
+│   └── support/              # Fixtures & helpers
+│       ├── contants
+|       |    └── global.ts    # Global setup root  
+│       ├── baseTest.ts       # BaseTest wrapper with hooks and custom trace/video
+│       ├── fixtures.ts       # test.extend, beforeEach/afterEach hooks
+│       ├── global-setup.ts   # runs once before suite
+│       ├── global-teardown.ts# runs once after suite
+│       └── helpers.ts
+├── test-result              # All timestamped reports, videos, screenshots, traces
+├── playwright.config.ts     # Test configuration
+├── .env                     # Environment variables (baseURL, credentials)
+├── tsconfig.json            # TypeScript config
 └── package.json             # npm scripts & dependencies
 ```
 
@@ -182,13 +192,15 @@ View results in playwright-report/index.html.
 ```
 
 **Patterns & Folders**
-* POM (Page Object Model): src/pages with separate locator and action files.
+* POM: src/pages with separate locator & action files.
 
-* Factory Pattern: src/factories for users, environments, browsers.
+* Factory Pattern: src/factories for env, users, browsers.
 
-* Support: src/support for custom fixtures, helpers, and setup.
+* Auto-Wait: CommonAction automatically waits for visibility.
 
-* Test Data: src/dataTest for JSON/TS data files.
+* Facade: src/pages/app.ts aggregates Page Objects.
+
+* Hooks: test.beforeEach & test.afterEach in fixtures.ts.
 
 
 **Adding New Pages / Tests**

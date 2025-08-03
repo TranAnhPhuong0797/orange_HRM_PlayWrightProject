@@ -2,6 +2,8 @@ import { defineConfig, devices, PlaywrightTestProject  } from '@playwright/test'
 import dotenv from 'dotenv';
 import { BrowserFactory, BrowserName } from './src/factories/BrowserFactory';
 import { EnvFactory, EnvName } from './src/factories/EnvFactory';
+import { globalResultsRoot } from './src/support/constants/global';
+import 'allure-playwright';
 
 // 1) Load .env
 dotenv.config();
@@ -36,17 +38,36 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html', { open: 'on-failure' }]],
   timeout: 30_000,
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+
+  // === REPORTER ===
+  reporter: [
+    // HTML reporter, Allure, JSON, and JUnit
+    ['html', {
+      outputFolder: `${globalResultsRoot}/html-report`,
+      open: 'on-failure'
+    }],
+    // Allure reporter
+    // ['allure-playwright', { outputFolder: `${globalResultsRoot}/allure-results` }],
+    
+    // JSON and JUnit reporters
+    // ['json', {
+    //   outputFile: `${globalResultsRoot}/report.json`
+    // }],
+    // ['junit', {
+    //   outputFile: `${globalResultsRoot}/junit-results.xml`
+    // }]
+  ],
+
   use: {
     // Default configuration for all tests (can be overridden per test)
     headless: true,
-    video: 'retain-on-failure', // Record video only when the test fails
     baseURL,
     navigationTimeout: 60_000,
     actionTimeout: 60_000,
+    video: 'retain-on-failure', // Record video only when the test fails
+    screenshot: 'only-on-failure', // ScreenShot only when the test fails
+    trace: 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */
@@ -75,11 +96,4 @@ export default defineConfig({
     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     // },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });

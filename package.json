@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "report:allure": "allure generate test-results/latest-run/allure-results --clean -o test-results/latest-run/allure-report",
+    "report:open": "allure open test-results/latest-run/allure-report"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +16,7 @@
     "@playwright/test": "^1.54.1",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^24.0.15",
+    "allure-playwright": "^3.3.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },

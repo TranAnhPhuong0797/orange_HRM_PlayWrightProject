@@ -1,0 +1,31 @@
+version: 2.1
+
+executors:
+  node:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.44.1-jammy
+    working_directory: ~/project
+
+jobs:
+  install-and-test:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm ci
+      - run:
+          name: Build project
+          command: npm run build
+      - run:
+          name: Run Playwright tests
+          command: npx playwright test --reporter=line
+      - store_artifacts:
+          path: playwright-report
+          destination: playwright-report
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - install-and-test

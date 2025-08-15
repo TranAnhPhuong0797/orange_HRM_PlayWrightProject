@@ -1,7 +1,7 @@
 import { defineConfig, devices, PlaywrightTestProject  } from '@playwright/test';
 import dotenv from 'dotenv';
-import { BrowserFactory, BrowserName } from './src/factories/BrowserFactory';
-import { EnvFactory, EnvName } from './src/factories/EnvFactory';
+import { browserFactory, browserName } from './src/factories/browserFactory';
+import { envFactory, envName } from './src/factories/envFactory';
 import { globalResultsRoot } from './src/support/constants/global';
 import 'allure-playwright';
 
@@ -9,12 +9,12 @@ import 'allure-playwright';
 dotenv.config();
 
 // 2) Get ENV from the TEST_ENV variable (default to 'dev' if not set)
-const ENV = (process.env.TEST_ENV as EnvName) || 'dev';
-const baseURL = EnvFactory.getBaseURL(ENV);
+const ENV = (process.env.TEST_ENV as envName) || 'dev';
+const baseURL = envFactory.getBaseURL(ENV);
 
-// 3) Generate an array of projects using BrowserFactory
-const projects: PlaywrightTestProject[] = (['chromium', 'firefox', 'webkit'] as BrowserName[])
-  .map(browserName => BrowserFactory.createProject(browserName as any))
+// 3) Generate an array of projects using browserFactory
+const projects: PlaywrightTestProject[] = (['chromium', 'firefox', 'webkit'] as browserName[])
+  .map(browserName => browserFactory.createProject(browserName as any))
   .map(project => ({
     ...project,
     use: {
@@ -73,9 +73,9 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    BrowserFactory.createProject('chromium'),
-    BrowserFactory.createProject('firefox'),
-    ...(isCI ? [] : [BrowserFactory.createProject('edge')]),
+    browserFactory.createProject('chromium'),
+    browserFactory.createProject('firefox'),
+    ...(isCI ? [] : [browserFactory.createProject('edge')]),
 
     /* Test against mobile viewports. */
     // {

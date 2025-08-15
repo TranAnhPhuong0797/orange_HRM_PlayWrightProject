@@ -2,15 +2,15 @@
 import { Page } from '@playwright/test';
 import { BaseComponent, LocatorFn }    from '../../common/baseComponent';
 import { loginLocators, type LoginLocators } from './locator';
-import { UserFactory, type UserRole }  from '../../factories/UserFactory';
+import { userFactory, type userRole }  from '../../factories/userFactory';
 
 export class LoginActions extends BaseComponent<LoginLocators> {
   constructor(page: Page) {
     super(page, loginLocators);
   }
 
-  async login(role: UserRole = 'admin') {
-    const { username, password } = UserFactory.getUser(role);
+  async login(role: userRole = 'admin') {
+    const { username, password } = userFactory.getUser(role);
     await this.page.goto('/');
     await this.action.fill('usernameInput', username);
     await this.action.fill('passwordInput', password);

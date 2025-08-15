@@ -1,10 +1,10 @@
 // Define user roles as a union type
-export type UserRole = 'admin' | 'regular' | 'guest';
+export type userRole = 'admin' | 'regular' | 'guest';
 
 /**
  * Interface representing user credentials.
  */
-export interface UserCreds {
+export interface userCreds {
   username: string;
   password: string;
 }
@@ -13,8 +13,8 @@ export interface UserCreds {
  * Factory class to retrieve user credentials
  * based on the specified role (admin, regular, guest).
  */
-export class UserFactory {
-  static getUser(role: UserRole): UserCreds {
+export class userFactory {
+  static getUser(role: userRole): userCreds {
     let username: string | undefined;
     let password: string | undefined;
 

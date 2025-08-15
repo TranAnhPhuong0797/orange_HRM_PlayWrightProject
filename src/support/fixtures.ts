@@ -1,6 +1,6 @@
 // src/support/fixtures.ts
 import { test as base } from '@playwright/test';
-import { UserFactory, UserRole } from '../factories/UserFactory';
+import { userFactory, userRole } from '../factories/userFactory';
 import { Helper} from '../support/helpers';
 import { globalResultsRoot } from '../support/constants/global';
 
@@ -12,7 +12,7 @@ const timestamp = Helper.getTimestamp();
  */
 export const test = base.extend<{
   user: { username: string; password: string };
-  userRole: UserRole;
+  userRole: userRole;
   resultsRoot: string;
 }>({
   // Fixture for user role, configurable via CLI or project config
@@ -20,7 +20,7 @@ export const test = base.extend<{
 
   // Fixture to retrieve user credentials based on the role
   user: async ({ userRole }, use) => {
-    const creds = UserFactory.getUser(userRole);
+    const creds = userFactory.getUser(userRole);
     await use(creds);
   },
 

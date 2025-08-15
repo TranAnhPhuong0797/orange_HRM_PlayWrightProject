@@ -1,10 +1,10 @@
 import { devices, PlaywrightTestProject } from '@playwright/test';
 import { globalResultsRoot } from '../support/constants/global';
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'edge';
+export type browserName = 'chromium' | 'firefox' | 'webkit' | 'edge';
 
-export class BrowserFactory {
-  static createProject(browser: BrowserName): PlaywrightTestProject {
+export class browserFactory {
+  static createProject(browser: browserName): PlaywrightTestProject {
     switch (browser) {
       case 'chromium':
         return { name: 'chromium', use: { ...devices['Desktop Chrome'] }, outputDir: globalResultsRoot };

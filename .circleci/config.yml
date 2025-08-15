@@ -1,31 +1,139 @@
 version: 2.1
 
 executors:
-  node:
+  pw:
     docker:
       - image: mcr.microsoft.com/playwright:v1.44.1-jammy
     working_directory: ~/project
 
+# Cho phép chọn env khi chạy pipeline (dev/staging/prod)
+parameters:
+  test_env:
+    type: string
+    default: "dev"
+
 jobs:
-  install-and-test:
-    executor: node
+  # Chạy 1 suite (folder) trên 1 browser — KHÔNG dùng parallelism để tránh ghi đè junit
+  run-suite:
+    executor: pw
+    parameters:
+      suite:
+        type: string        # ví dụ: e2e/smokeTest, e2e/DashBoard, e2e/Admin, e2e/Leave, e2e/regressionTest
+      browser:
+        type: enum
+        enum: ["chromium", "firefox", "webkit"]
+      test_env:
+        type: string
+        default: "dev"
+
     steps:
       - checkout
+
+      - restore_cache:
+          key: npm-cache-{{ checksum "package-lock.json" }}
+
       - run:
-          name: Install dependencies
+          name: Install deps
           command: npm ci
+
+      - save_cache:
+          paths: [node_modules]
+          key: npm-cache-{{ checksum "package-lock.json" }}
+
       - run:
-          name: Build project
-          command: npm run build
+          name: Ensure browsers
+          command: npx playwright install
+
       - run:
-          name: Run Playwright tests
-          command: npx playwright test --reporter=line
+          name: Run Playwright (folder + browser)
+          command: |
+            echo "Folder: << parameters.suite >>"
+            echo "Browser: << parameters.browser >>"
+
+            export TEST_ENV="<< parameters.test_env >>"
+            # reporter đã cấu hình sẵn trong playwright.config.ts
+            npx playwright test "<< parameters.suite >>" --project="<< parameters.browser >>"
+
+      # test-results: chứa junit-results.xml (nằm trong globalResultsRoot), video, trace, screenshots
+      - store_test_results:
+          path: test-results
+
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+
       - store_artifacts:
           path: playwright-report
           destination: playwright-report
 
 workflows:
   version: 2
-  test:
+
+  # 1) PR/feature & develop: chạy smoke trên 3 browsers
+  pr_smoke:
     jobs:
-      - install-and-test
+      - run-suite:
+          name: smoke-<< matrix.browser >>
+          matrix:
+            parameters:
+              suite: ["e2e/smokeTest"]
+              browser: ["chromium", "firefox", "webkit"]
+          test_env: << pipeline.parameters.test_env >>
+          filters:
+            branches:
+              only:
+                - develop
+                - /feature\/.*/
+
+  # 2) develop/main: chạy theo module folders (Dashboard, Admin, Leave)
+  modules:
+    jobs:
+      - run-suite:
+          name: dashboard-<< matrix.browser >>
+          matrix:
+            parameters:
+              suite: ["e2e/DashBoard"]
+              browser: ["chromium", "firefox", "webkit"]
+          test_env: << pipeline.parameters.test_env >>
+          filters:
+            branches:
+              only: [develop, main]
+
+      - run-suite:
+          name: admin-<< matrix.browser >>
+          matrix:
+            parameters:
+              suite: ["e2e/Admin"]
+              browser: ["chromium", "firefox", "webkit"]
+          test_env: << pipeline.parameters.test_env >>
+          filters:
+            branches:
+              only: [develop, main]
+
+      - run-suite:
+          name: leave-<< matrix.browser >>
+          matrix:
+            parameters:
+              suite: ["e2e/Leave"]
+              browser: ["chromium", "firefox", "webkit"]
+          test_env: << pipeline.parameters.test_env >>
+          filters:
+            branches:
+              only: [develop, main]
+
+  # 3) Nightly regression theo lịch (UTC 17:00 = 00:00 +07)
+  nightly_regression:
+    triggers:
+      - schedule:
+          cron: "0 17 * * *"
+          filters:
+            branches:
+              only: main
+    jobs:
+      - run-suite:
+          name: regression-<< matrix.browser >>
+          matrix:
+            parameters:
+              suite: ["e2e/regressionTest"]
+              browser: ["chromium", "firefox", "webkit"]
+          test_env: "staging"

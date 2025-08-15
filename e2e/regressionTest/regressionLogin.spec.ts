@@ -1,9 +1,9 @@
 // e2e/firstTestWithLogin.ts
-import { test } from '../src/support/fixtures';
+import { test } from '../../src/support/fixtures';
 import { expect } from '@playwright/test';
-import { LoginActions } from '../src/pages/loginPage/action';
-import { CommonAssertion } from '../src/common/assertion';
-import { commonLocators } from '../src/common/locator';
+import { LoginActions } from '../../src/pages/loginPage/action';
+import { CommonAssertion } from '../../src/common/assertion';
+import { commonLocators } from '../../src/common/locator';
 
 test.describe('Login Test Suite', () => {
   test('Admin user can log in successfully', async ({ page, user }) => {

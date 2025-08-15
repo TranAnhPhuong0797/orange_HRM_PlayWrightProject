@@ -9,28 +9,24 @@ import { Page, Locator } from '@playwright/test';
  */
 export const loginLocators = {
   /**
-   * Returns the locator for the username input field.
-   * Uses the `name=username` selector.
+   * Uses the CSS `name=username` selector.
    */
   usernameInput: (page: Page): Locator =>
-    page.locator('name=username'),
+    page.locator('input[name="username"]'),
 
   /**
-   * Returns the locator for the password input field.
-   * Uses the `name=password` selector.
+   * Uses the CSS `name=password` selector.
    */
   passwordInput: (page: Page): Locator =>
-    page.locator('name=password'),
+    page.locator('input[name="password"]'),
 
   /**
-   * Returns the locator for the login button.
    * Uses the CSS selector `button.orangehrm-login-button`.
    */
   loginButton: (page: Page): Locator =>
     page.locator('button.orangehrm-login-button'),
 
   /**
-   * Returns the locator for the login error message element.
    * Uses the CSS selector `.oxd-alert-content--error`.
    */
   loginError: (page: Page): Locator =>

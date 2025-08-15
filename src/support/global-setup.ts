@@ -1,5 +1,5 @@
 import { FullConfig } from '@playwright/test';
-import { EnvFactory, EnvName } from '../factories/EnvFactory';
+import { envFactory, envName } from '../factories/envFactory';
 
 /**
  * Global setup file for Playwright.
@@ -7,8 +7,8 @@ import { EnvFactory, EnvName } from '../factories/EnvFactory';
  */
 export default async function globalSetup(config: FullConfig) {
   // Example: load environment variables, connect to a database, etc.
-  const env = (process.env.TEST_ENV as EnvName) || 'dev';
-  const baseURL = EnvFactory.getBaseURL(env);
+  const env = (process.env.TEST_ENV as envName) || 'dev';
+  const baseURL = envFactory.getBaseURL(env);
   console.log('🌍 Global setup – baseURL is', baseURL);
 
   // … add any other “hard” initialization logic you need

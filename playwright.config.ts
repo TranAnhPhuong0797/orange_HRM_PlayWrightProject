@@ -25,6 +25,7 @@ const projects: PlaywrightTestProject[] = (['chromium', 'firefox', 'webkit'] as 
     }
   }));
 
+const isCI = !!process.env.CI;
 export default defineConfig({
   globalSetup: require.resolve('./src/support/global-setup'),
   globalTeardown: require.resolve('./src/support/global-teardown'),
@@ -74,7 +75,7 @@ export default defineConfig({
   projects: [
     BrowserFactory.createProject('chromium'),
     BrowserFactory.createProject('firefox'),
-    BrowserFactory.createProject('edge'),
+    ...(isCI ? [] : [BrowserFactory.createProject('edge')]),
 
     /* Test against mobile viewports. */
     // {

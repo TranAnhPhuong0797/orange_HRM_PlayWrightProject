@@ -6,22 +6,22 @@ executors:
       - image: mcr.microsoft.com/playwright:v1.44.1-jammy
     working_directory: ~/project
 
+# Cho phép chọn env khi chạy pipeline (dev/staging/prod)
 parameters:
   test_env:
     type: string
     default: "dev"
 
-# Reusable job: chạy 1 folder (suite) trên 1 browser; trong job có parallelism + sharding
 jobs:
+  # Chạy 1 suite (folder) trên 1 browser — KHÔNG dùng parallelism để tránh ghi đè junit
   run-suite:
     executor: pw
-    parallelism: 2         # số container song song cho mỗi (suite,browser) -> điều chỉnh theo quy mô
     parameters:
       suite:
-        type: string       # ví dụ: e2e/smokeTest hoặc e2e/DashBoard
+        type: string        # ví dụ: e2e/smokeTest, e2e/DashBoard, e2e/Admin, e2e/Leave, e2e/regressionTest
       browser:
         type: enum
-        enum: ["chromium", "firefox"]
+        enum: ["chromium", "firefox", "webkit"]
       test_env:
         type: string
         default: "dev"
@@ -33,8 +33,7 @@ jobs:
           key: npm-cache-{{ checksum "package-lock.json" }}
 
       - run:
-          name: Install dependencies
-          # Sử dụng npm ci để cài đặt nhanh và chính xác theo package-lock.json
+          name: Install deps
           command: npm ci
 
       - save_cache:
@@ -42,31 +41,20 @@ jobs:
           key: npm-cache-{{ checksum "package-lock.json" }}
 
       - run:
-          name: Install Playwright
+          name: Ensure browsers
           command: npx playwright install
 
-      # Shard theo CircleCI
       - run:
-          name: Run Playwright (folder + browser + shard)
+          name: Run Playwright (folder + browser)
           command: |
-            SHARD_INDEX=$((CIRCLE_NODE_INDEX+1))
-            SHARD_TOTAL=$CIRCLE_NODE_TOTAL
-
             echo "Folder: << parameters.suite >>"
             echo "Browser: << parameters.browser >>"
-            echo "Shard: $SHARD_INDEX/$SHARD_TOTAL"
 
-            # Tùy chọn: tránh ghi đè JUnit khi sharding
-            export PW_JUNIT_OUTPUT="test-results/junit/results-<< parameters.browser >>-$SHARD_INDEX.xml"
+            export TEST_ENV="<< parameters.test_env >>"
+            # reporter đã cấu hình sẵn trong playwright.config.ts
+            npx playwright test "<< parameters.suite >>" --project="<< parameters.browser >>"
 
-            npx playwright test "<< parameters.suite >>" \
-              --project="<< parameters.browser >>" \
-              --shard="$SHARD_INDEX/$SHARD_TOTAL" \
-              --reporter=junit,html
-
-          environment:
-            TEST_ENV: << parameters.test_env >>
-
+      # test-results: chứa junit-results.xml (nằm trong globalResultsRoot), video, trace, screenshots
       - store_test_results:
           path: test-results
 
@@ -81,80 +69,71 @@ jobs:
 workflows:
   version: 2
 
-  # 1) PR / feature: chạy smoke nhanh trên 3 browsers
+  # 1) PR/feature & develop: chạy smoke trên 3 browsers
   pr_smoke:
-    when: on_success
     jobs:
       - run-suite:
           name: smoke-<< matrix.browser >>
           matrix:
             parameters:
               suite: ["e2e/smokeTest"]
-              browser: ["chromium", "firefox"]
+              browser: ["chromium", "firefox", "webkit"]
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
               only:
-                - /feature\/.*/   # tuỳ naming convention
                 - develop
+                - /feature\/.*/
 
-  # 2) Module suites trên develop/main
+  # 2) develop/main: chạy theo module folders (Dashboard, Admin, Leave)
   modules:
-    when: on_success
     jobs:
       - run-suite:
           name: dashboard-<< matrix.browser >>
           matrix:
             parameters:
               suite: ["e2e/DashBoard"]
-              browser: ["chromium", "firefox"]
+              browser: ["chromium", "firefox", "webkit"]
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
-              only:
-                - develop
-                - main
+              only: [develop, main]
 
       - run-suite:
           name: admin-<< matrix.browser >>
           matrix:
             parameters:
               suite: ["e2e/Admin"]
-              browser: ["chromium", "firefox"]
+              browser: ["chromium", "firefox", "webkit"]
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
-              only:
-                - develop
-                - main
+              only: [develop, main]
 
       - run-suite:
           name: leave-<< matrix.browser >>
           matrix:
             parameters:
               suite: ["e2e/Leave"]
-              browser: ["chromium", "firefox"]
+              browser: ["chromium", "firefox", "webkit"]
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
-              only:
-                - develop
-                - main
+              only: [develop, main]
 
-  # 3) Nightly regression theo lịch (chạy full browsers)
+  # 3) Nightly regression theo lịch (UTC 17:00 = 00:00 +07)
   nightly_regression:
     triggers:
       - schedule:
-          cron: "0 17 * * *"   # 00:00+07
+          cron: "0 17 * * *"
           filters:
             branches:
-              only:
-                - main
+              only: main
     jobs:
       - run-suite:
           name: regression-<< matrix.browser >>
           matrix:
             parameters:
               suite: ["e2e/regressionTest"]
-              browser: ["chromium", "firefox"]
-          test_env: "staging"   # ví dụ: nightly chạy trên staging
+              browser: ["chromium", "firefox", "webkit"]
+          test_env: "staging"

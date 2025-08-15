@@ -55,9 +55,9 @@ export default defineConfig({
     // ['json', {
     //   outputFile: `${globalResultsRoot}/report.json`
     // }],
-    // ['junit', {
-    //   outputFile: `${globalResultsRoot}/junit-results.xml`
-    // }]
+    ['junit', {
+      outputFile: `${globalResultsRoot}/junit-results.xml`
+    }]
   ],
 
   use: {

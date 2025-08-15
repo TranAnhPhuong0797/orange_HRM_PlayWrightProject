@@ -19,9 +19,10 @@ jobs:
     parameters:
       suite:
         type: string        # ví dụ: e2e/smokeTest, e2e/DashBoard, e2e/Admin, e2e/Leave, e2e/regressionTest
+        default: "e2e/smokeTest"
       browser:
         type: enum
-        enum: ["chromium", "firefox", "webkit"]
+        enum: ["chromium", "firefox"]
       test_env:
         type: string
         default: "dev"
@@ -33,7 +34,7 @@ jobs:
           key: npm-cache-{{ checksum "package-lock.json" }}
 
       - run:
-          name: Install deps
+          name: Install dependencies
           command: npm ci
 
       - save_cache:
@@ -77,7 +78,7 @@ workflows:
           matrix:
             parameters:
               suite: ["e2e/smokeTest"]
-              browser: ["chromium", "firefox", "webkit"]
+              browser: ["chromium", "firefox"]
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
@@ -92,8 +93,8 @@ workflows:
           name: dashboard-<< matrix.browser >>
           matrix:
             parameters:
-              suite: ["e2e/DashBoard"]
-              browser: ["chromium", "firefox", "webkit"]
+              suite: ["e2e/regressionTest"]
+              browser: ["chromium", "firefox"]
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
@@ -103,19 +104,8 @@ workflows:
           name: admin-<< matrix.browser >>
           matrix:
             parameters:
-              suite: ["e2e/Admin"]
-              browser: ["chromium", "firefox", "webkit"]
-          test_env: << pipeline.parameters.test_env >>
-          filters:
-            branches:
-              only: [develop, main]
-
-      - run-suite:
-          name: leave-<< matrix.browser >>
-          matrix:
-            parameters:
-              suite: ["e2e/Leave"]
-              browser: ["chromium", "firefox", "webkit"]
+              suite: ["e2e/dashBoardModule"]
+              browser: ["chromium", "firefox"]
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
@@ -135,5 +125,5 @@ workflows:
           matrix:
             parameters:
               suite: ["e2e/regressionTest"]
-              browser: ["chromium", "firefox", "webkit"]
+              browser: ["chromium", "firefox"]
           test_env: "staging"

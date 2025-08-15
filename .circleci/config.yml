@@ -98,7 +98,7 @@ workflows:
           test_env: << pipeline.parameters.test_env >>
           filters:
             branches:
-              only: [develop, main]
+              only: [develop, main, Ticket_004_Update_And_Fix_PipeLine]
 
       - run-suite:
           name: admin-<< matrix.browser >>
